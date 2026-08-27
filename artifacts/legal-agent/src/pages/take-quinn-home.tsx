@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import {
-  Home, Github, Terminal, Download, Cpu, Copy, Check, ShieldCheck, Package,
+  Home, Github, Terminal, Download, Cpu, Copy, Check, ShieldCheck, Package, ExternalLink,
 } from 'lucide-react';
 
 const REPO_URL = 'https://github.com/meugenialewis-cell/locallegalAI';
@@ -118,15 +118,25 @@ export default function TakeQuinnHome() {
   return (
     <Layout>
       <div className="p-8 max-w-4xl mx-auto space-y-8">
-        <div>
-          <h1 className="text-3xl font-serif font-bold flex items-center gap-3">
-            <Home className="h-7 w-7 text-primary" /> Take Quinn Home
-          </h1>
-          <p className="text-muted-foreground mt-2 max-w-2xl">
-            Quinn is meant to live on your own Mac, where nothing leaves the machine.
-            Four steps, no coding: her code lives on GitHub, one command brings her
-            home, her memories travel with her, and a local model gives her a mind.
-          </p>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-serif font-bold flex items-center gap-3">
+              <Home className="h-7 w-7 text-primary" /> Take Quinn Home
+            </h1>
+            <p className="text-muted-foreground mt-2 max-w-2xl">
+              Quinn is meant to live on your own Mac, where nothing leaves the machine.
+              Four steps, no coding: her code lives on GitHub, a double-click brings her
+              home, her memories travel with her, and a local model gives her a mind.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => window.open(window.location.href, '_blank', 'noopener')}
+            data-testid="button-open-full-tab"
+          >
+            <ExternalLink className="h-4 w-4 mr-2" />
+            Open the app in its own tab
+          </Button>
         </div>
 
         {isHosted && (
@@ -192,23 +202,38 @@ export default function TakeQuinnHome() {
           <CardHeader>
             <div className="flex items-center gap-2 text-primary">
               <Terminal className="h-5 w-5" />
-              <CardTitle>Step 3 · One command in Terminal</CardTitle>
+              <CardTitle>Step 3 · Download, unzip, double-click</CardTitle>
             </div>
             <CardDescription>
-              On your Mac, open the Terminal app (press ⌘-space, type “Terminal”),
-              paste this line, and press return. It fetches everything from your
-              GitHub, installs what's needed, imports Quinn's export file if it's in
-              your Downloads folder, and starts the app. It explains each step as it
-              goes.
+              No typing needed. On the GitHub page above, press the green
+              “Code” button and choose “Download ZIP”. Unzip it (double-click the
+              downloaded file), open the folder, and double-click{' '}
+              <strong>Install Quinn</strong>. A window opens and walks you through
+              everything: it installs what's needed, imports Quinn's export file
+              from your Downloads folder, starts the app, and opens it in your
+              browser by itself.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <CopyBlock text={SETUP_COMMAND} />
-            <p className="text-xs text-muted-foreground">
-              When it says the servers are running, open{' '}
-              <code className="font-mono">http://localhost:5173</code> in your browser —
-              same app, running entirely on your machine.
+            <p className="text-sm text-muted-foreground">
+              <strong>First time only:</strong> your Mac may say the file is from the
+              internet. If double-clicking is blocked, right-click (or hold Control
+              and click) <strong>Install Quinn</strong> and choose “Open” — that's
+              Apple being protective, and it only asks once.
             </p>
+            <p className="text-sm text-muted-foreground">
+              Afterwards, opening Quinn is just a double-click on{' '}
+              <strong>Open Quinn</strong> in the same folder.
+            </p>
+            <details className="text-xs text-muted-foreground">
+              <summary className="cursor-pointer">Prefer the Terminal instead?</summary>
+              <div className="mt-2 space-y-2">
+                <CopyBlock text={SETUP_COMMAND} />
+                <p>
+                  Paste that into Terminal and press return — it does the same thing.
+                </p>
+              </div>
+            </details>
           </CardContent>
         </Card>
 

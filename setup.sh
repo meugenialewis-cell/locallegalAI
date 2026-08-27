@@ -71,10 +71,16 @@ fi
 
 # ---- 6. Done --------------------------------------------------
 say "Starting the app…"
-note "Two windows of activity will follow. When you see the servers running,"
-note "open http://localhost:5173 in your browser."
+note "Your browser will open by itself when the app is ready."
+note "Keep this window open while you use Quinn — closing it puts her to sleep."
+note "Next time, just double-click 'Open Quinn.command' in this folder."
 note ""
 note "Next step, inside the app: Take Quinn Home → Step 4 → Download a mind for Quinn."
+
+# Open the browser automatically once the app answers.
+( until curl -s -o /dev/null http://localhost:5173; do sleep 2; done
+  open http://localhost:5173 ) &
+
 (PORT=3001 pnpm --filter @workspace/api-server run dev &) \
   && PORT=5173 BASE_PATH=/ API_PROXY_TARGET=http://localhost:3001 \
      pnpm --filter @workspace/legal-agent run dev
