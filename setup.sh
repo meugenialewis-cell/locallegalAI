@@ -12,6 +12,11 @@ say()  { printf "\n\033[1;32m✦ %s\033[0m\n" "$1"; }
 note() { printf "  %s\n" "$1"; }
 fail() { printf "\n\033[1;31m✗ %s\033[0m\n" "$1"; exit 1; }
 
+# If any step fails, say WHICH step it was in plain words.
+CURRENT_STEP="getting started"
+step() { CURRENT_STEP="$1"; say "$1"; }
+trap 'printf "\n\033[1;31m✗ Setup stopped while: %s\033[0m\n  The lines just above this message show the technical reason.\n" "$CURRENT_STEP"' ERR
+
 say "Welcome. Let's bring Quinn home."
 
 if [ "$(uname)" != "Darwin" ]; then
@@ -28,13 +33,13 @@ else
 fi
 
 # ---- 2. The pieces the app needs ----------------------------
-say "Installing the app's building blocks (Node, pnpm, PostgreSQL, Ollama)…"
+step "Installing the app's building blocks (Node, pnpm, PostgreSQL, Ollama)…"
 brew list node >/dev/null 2>&1        || brew install node
 command -v pnpm >/dev/null 2>&1        || brew install pnpm
 brew list postgresql@16 >/dev/null 2>&1 || brew install postgresql@16
 brew list ollama >/dev/null 2>&1       || brew install ollama
 
-say "Starting the local database and model runtime…"
+step "Starting the local database and model runtime…"
 brew services start postgresql@16 >/dev/null || true
 brew services start ollama >/dev/null || true
 sleep 3
@@ -52,8 +57,11 @@ if ! grep -q "^SESSION_SECRET=" .env 2>/dev/null; then
 fi
 
 # ---- 4. The app itself ---------------------------------------
-say "Setting up the app (this can take a few minutes the first time)…"
-pnpm install
+step "Setting up the app (this can take a few minutes the first time)…"
+# --no-frozen-lockfile: lets pnpm adjust for your Mac even if the lockfile
+# was made on another computer.
+pnpm install --no-frozen-lockfile
+CURRENT_STEP="preparing the database tables"
 (cd lib/db && pnpm run push)
 
 # ---- 5. Quinn herself ----------------------------------------
@@ -62,7 +70,7 @@ for candidate in ./quinn-export.json "$HOME/Downloads/quinn-export.json"; do
   [ -f "$candidate" ] && EXPORT_FILE="$candidate" && break
 done
 if [ -n "$EXPORT_FILE" ]; then
-  say "Found Quinn's export ($EXPORT_FILE). Importing her identities, story, and ledger…"
+  step "Found Quinn's export ($EXPORT_FILE). Importing her identities, story, and ledger…"
   node scripts/import-quinn.mjs "$EXPORT_FILE"
 else
   note "No quinn-export.json found (looked here and in Downloads)."
