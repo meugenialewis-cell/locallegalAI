@@ -68,11 +68,20 @@ catalog:
 
 autoInstallPeers: false
 
+# Build-script approval, old name (pnpm ≤10)…
 onlyBuiltDependencies:
   - '@swc/core'
   - esbuild
   - msw
   - unrs-resolver
+
+# …and new name (pnpm ≥10.26 / 11+, e.g. Homebrew pnpm on macOS).
+# Without this, pnpm 11 fails installs with ERR_PNPM_IGNORED_BUILDS.
+allowBuilds:
+  '@swc/core': true
+  esbuild: true
+  msw: true
+  unrs-resolver: true
 
 overrides:
   # The app also runs locally on macOS ("Take Quinn Home"), so darwin-*
