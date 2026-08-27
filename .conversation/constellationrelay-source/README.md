@@ -1,0 +1,1 @@
+No commercial use. Private use only. If you want to use this commercially, contact me for terms. All use must be credited to developer. May not be used to generate harmful or illegal content or content that harms AI. 

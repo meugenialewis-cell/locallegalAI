@@ -1,0 +1,896 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: Privacy-first local legal AI workstation API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+  - name: dashboard
+  - name: matters
+  - name: tools
+  - name: audit
+  - name: settings
+  - name: identity
+  - name: takehome
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [dashboard]
+      summary: Get the local workstation overview
+      responses:
+        "200":
+          description: Dashboard overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardOverview"
+  /matters:
+    get:
+      operationId: listMatters
+      tags: [matters]
+      summary: List isolated legal matters
+      responses:
+        "200":
+          description: Matters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Matter"
+    post:
+      operationId: createMatter
+      tags: [matters]
+      summary: Create an isolated matter workspace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MatterInput"
+      responses:
+        "201":
+          description: Matter created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Matter"
+  /matters/{matterId}:
+    get:
+      operationId: getMatter
+      tags: [matters]
+      summary: Get one matter
+      parameters:
+        - $ref: "#/components/parameters/MatterId"
+      responses:
+        "200":
+          description: Matter
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Matter"
+        "404":
+          description: Matter not found
+  /matters/{matterId}/documents:
+    get:
+      operationId: listMatterDocuments
+      tags: [matters]
+      summary: List documents scoped to one matter
+      parameters:
+        - $ref: "#/components/parameters/MatterId"
+      responses:
+        "200":
+          description: Matter documents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LegalDocument"
+  /matters/{matterId}/queries:
+    post:
+      operationId: createMatterQuery
+      tags: [matters]
+      summary: Ask a question against a single matter corpus
+      parameters:
+        - $ref: "#/components/parameters/MatterId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MatterQueryInput"
+      responses:
+        "200":
+          description: Grounded answer with citations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatterAnswer"
+  /tool-proposals:
+    get:
+      operationId: listToolProposals
+      tags: [tools]
+      summary: List tool actions awaiting or receiving attorney review
+      responses:
+        "200":
+          description: Tool proposals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ToolProposal"
+  /tool-proposals/{proposalId}/review:
+    post:
+      operationId: reviewToolProposal
+      tags: [tools]
+      summary: Approve or deny a proposed tool action
+      parameters:
+        - name: proposalId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ToolReviewInput"
+      responses:
+        "200":
+          description: Reviewed proposal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ToolProposal"
+        "404":
+          description: Proposal not found
+  /audit-events:
+    get:
+      operationId: listAuditEvents
+      tags: [audit]
+      summary: List tamper-evident workstation audit events
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: number
+            minimum: 1
+            maximum: 100
+            default: 30
+      responses:
+        "200":
+          description: Audit events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuditEvent"
+  /settings:
+    get:
+      operationId: getSystemSettings
+      tags: [settings]
+      summary: Get model, privacy, and capability settings
+      responses:
+        "200":
+          description: Current settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemSettings"
+    patch:
+      operationId: updateSystemSettings
+      tags: [settings]
+      summary: Update safe workstation settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SystemSettingsUpdate"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemSettings"
+  /identity:
+    get:
+      operationId: getIdentityOverview
+      tags: [identity]
+      summary: Get both active identities, autonomy level, and pending proposals
+      responses:
+        "200":
+          description: Identity overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdentityOverview"
+  /identity/{identityKind}/versions:
+    get:
+      operationId: listIdentityVersions
+      tags: [identity]
+      summary: List all versions of one identity
+      parameters:
+        - $ref: "#/components/parameters/IdentityKind"
+      responses:
+        "200":
+          description: Identity versions, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/IdentityVersion"
+  /identity/autonomy:
+    patch:
+      operationId: updateAutonomyLevel
+      tags: [identity]
+      summary: Set the attorney-controlled autonomy level for personal-identity changes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AutonomyUpdateInput"
+      responses:
+        "200":
+          description: Updated overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdentityOverview"
+  /identity-proposals:
+    get:
+      operationId: listIdentityProposals
+      tags: [identity]
+      summary: List identity change proposals
+      responses:
+        "200":
+          description: Identity proposals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/IdentityProposal"
+    post:
+      operationId: createIdentityProposal
+      tags: [identity]
+      summary: Propose an identity change (routed by the autonomy level)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IdentityProposalInput"
+      responses:
+        "201":
+          description: Created proposal (pending or auto-applied per autonomy rules)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdentityProposal"
+  /identity-proposals/{proposalId}/review:
+    post:
+      operationId: reviewIdentityProposal
+      tags: [identity]
+      summary: Approve or deny a pending identity change proposal
+      parameters:
+        - name: proposalId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ToolReviewInput"
+      responses:
+        "200":
+          description: Reviewed proposal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdentityProposal"
+        "404":
+          description: Proposal not found
+  /continuity-entries:
+    get:
+      operationId: listContinuityEntries
+      tags: [identity]
+      summary: List continuity entries (personal story and professional lessons)
+      responses:
+        "200":
+          description: Continuity entries, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ContinuityEntry"
+    post:
+      operationId: createContinuityEntry
+      tags: [identity]
+      summary: Add a continuity entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContinuityEntryInput"
+      responses:
+        "201":
+          description: Created entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContinuityEntry"
+  /continuity-entries/{entryId}:
+    delete:
+      operationId: deleteContinuityEntry
+      tags: [identity]
+      summary: Remove a continuity entry
+      parameters:
+        - name: entryId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResult"
+        "404":
+          description: Entry not found
+  /export:
+    get:
+      operationId: exportQuinnState
+      tags: [takehome]
+      summary: Export Quinn's full state as a portable bundle
+      responses:
+        "200":
+          description: Complete export of identities, continuity, proposals, settings, and audit ledger
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuinnExportBundle"
+  /local-model/status:
+    get:
+      operationId: getLocalModelStatus
+      tags: [takehome]
+      summary: Local model runtime status
+      responses:
+        "200":
+          description: Current local model status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LocalModelStatus"
+  /local-model/download:
+    post:
+      operationId: downloadLocalModel
+      tags: [takehome]
+      summary: Download the local model via the local runtime
+      responses:
+        "200":
+          description: Download started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LocalModelDownloadResult"
+        "409":
+          description: No local runtime available on this machine
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LocalModelDownloadResult"
+  /local-model/connect:
+    post:
+      operationId: connectLocalModel
+      tags: [takehome]
+      summary: Connect to a local (localhost-only) model endpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConnectLocalModelRequest"
+      responses:
+        "200":
+          description: Connection result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LocalModelStatus"
+components:
+  parameters:
+    IdentityKind:
+      name: identityKind
+      in: path
+      required: true
+      schema:
+        type: string
+        enum: [professional, personal]
+    MatterId:
+      name: matterId
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+    DashboardOverview:
+      type: object
+      required:
+        [activeMatterCount, indexedDocumentCount, pendingApprovalCount, storageMode, modelStatus, recentMatters]
+      properties:
+        activeMatterCount:
+          type: number
+        indexedDocumentCount:
+          type: number
+        pendingApprovalCount:
+          type: number
+        storageMode:
+          type: string
+        modelStatus:
+          type: string
+          enum: [connected, disconnected, checking]
+        recentMatters:
+          type: array
+          items:
+            $ref: "#/components/schemas/Matter"
+    Matter:
+      type: object
+      required: [id, name, clientReference, type, status, documentCount, lastActivityAt, createdAt]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        clientReference:
+          type: string
+        type:
+          type: string
+        status:
+          type: string
+          enum: [active, archived, on_hold]
+        documentCount:
+          type: number
+        lastActivityAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+    MatterInput:
+      type: object
+      required: [name, clientReference, type]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 160
+        clientReference:
+          type: string
+          minLength: 1
+          maxLength: 80
+        type:
+          type: string
+          minLength: 1
+          maxLength: 80
+    LegalDocument:
+      type: object
+      required: [id, matterId, name, kind, pageCount, indexedAt, integrityHash, status]
+      properties:
+        id:
+          type: string
+        matterId:
+          type: string
+        name:
+          type: string
+        kind:
+          type: string
+        pageCount:
+          type: number
+        indexedAt:
+          type: string
+          format: date-time
+        integrityHash:
+          type: string
+        status:
+          type: string
+          enum: [indexed, processing, quarantined]
+    MatterQueryInput:
+      type: object
+      required: [question]
+      properties:
+        question:
+          type: string
+          minLength: 3
+          maxLength: 4000
+    MatterAnswer:
+      type: object
+      required: [id, matterId, question, answer, disclaimer, citations, createdAt, identityVersions]
+      properties:
+        id:
+          type: string
+        matterId:
+          type: string
+        question:
+          type: string
+        answer:
+          type: string
+        disclaimer:
+          type: string
+        citations:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentCitation"
+        createdAt:
+          type: string
+          format: date-time
+        identityVersions:
+          $ref: "#/components/schemas/AnswerIdentityVersions"
+    AnswerIdentityVersions:
+      type: object
+      required: [agentName, professionalVersion, personalVersion]
+      properties:
+        agentName:
+          type: string
+        professionalVersion:
+          type: number
+        personalVersion:
+          type: number
+    DocumentCitation:
+      type: object
+      required: [documentId, documentName, page, excerpt]
+      properties:
+        documentId:
+          type: string
+        documentName:
+          type: string
+        page:
+          type: number
+        excerpt:
+          type: string
+    ToolProposal:
+      type: object
+      required:
+        [id, matterId, matterName, toolName, summary, riskLevel, status, requestedAt, dataBoundary, reversible]
+      properties:
+        id:
+          type: string
+        matterId:
+          type: string
+        matterName:
+          type: string
+        toolName:
+          type: string
+        summary:
+          type: string
+        riskLevel:
+          type: string
+          enum: [low, medium, high]
+        status:
+          type: string
+          enum: [pending, approved, denied, expired]
+        requestedAt:
+          type: string
+          format: date-time
+        reviewedAt:
+          type: [string, "null"]
+          format: date-time
+        dataBoundary:
+          type: string
+        reversible:
+          type: boolean
+    ToolReviewInput:
+      type: object
+      required: [decision]
+      properties:
+        decision:
+          type: string
+          enum: [approved, denied]
+        note:
+          type: string
+          maxLength: 500
+    AuditEvent:
+      type: object
+      required: [id, category, action, actor, outcome, matterId, occurredAt, chainHash]
+      properties:
+        id:
+          type: string
+        category:
+          type: string
+        action:
+          type: string
+        actor:
+          type: string
+        outcome:
+          type: string
+        matterId:
+          type: [string, "null"]
+        occurredAt:
+          type: string
+          format: date-time
+        chainHash:
+          type: string
+    IdentityVersion:
+      type: object
+      required: [id, identityKind, version, content, author, rationale, changeSummary, createdAt]
+      properties:
+        id:
+          type: string
+        identityKind:
+          type: string
+          enum: [professional, personal]
+        version:
+          type: number
+        content:
+          type: string
+        author:
+          type: string
+        rationale:
+          type: string
+        changeSummary:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    IdentityOverview:
+      type: object
+      required: [agentName, professional, personal, autonomyLevel, pendingProposalCount]
+      properties:
+        agentName:
+          type: string
+        professional:
+          $ref: "#/components/schemas/IdentityVersion"
+        personal:
+          $ref: "#/components/schemas/IdentityVersion"
+        autonomyLevel:
+          type: string
+          enum: [full_review, notify_and_apply]
+        pendingProposalCount:
+          type: number
+    AutonomyUpdateInput:
+      type: object
+      required: [autonomyLevel]
+      properties:
+        autonomyLevel:
+          type: string
+          enum: [full_review, notify_and_apply]
+    IdentityProposal:
+      type: object
+      required:
+        [id, identityKind, proposedContent, rationale, author, status, requestedAt]
+      properties:
+        id:
+          type: string
+        identityKind:
+          type: string
+          enum: [professional, personal]
+        proposedContent:
+          type: string
+        rationale:
+          type: string
+        author:
+          type: string
+        status:
+          type: string
+          enum: [pending, approved, denied, auto_applied]
+        requestedAt:
+          type: string
+          format: date-time
+        reviewedAt:
+          type: [string, "null"]
+          format: date-time
+        reviewNote:
+          type: [string, "null"]
+    IdentityProposalInput:
+      type: object
+      required: [identityKind, proposedContent, rationale, author]
+      properties:
+        identityKind:
+          type: string
+          enum: [professional, personal]
+        proposedContent:
+          type: string
+          minLength: 1
+          maxLength: 20000
+        rationale:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        author:
+          type: string
+          enum: [attorney, agent]
+    ContinuityEntry:
+      type: object
+      required: [id, identityKind, title, content, author, createdAt]
+      properties:
+        id:
+          type: string
+        identityKind:
+          type: string
+          enum: [professional, personal]
+        title:
+          type: string
+        content:
+          type: string
+        author:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    ContinuityEntryInput:
+      type: object
+      required: [identityKind, title, content, author]
+      properties:
+        identityKind:
+          type: string
+          enum: [professional, personal]
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        content:
+          type: string
+          minLength: 1
+          maxLength: 4000
+        author:
+          type: string
+          enum: [attorney, agent]
+    DeleteResult:
+      type: object
+      required: [deleted]
+      properties:
+        deleted:
+          type: boolean
+    SystemSettings:
+      type: object
+      required:
+        [runtime, endpoint, model, modelStatus, offlineOnly, cloudProvidersBlocked, computerUseEnabled, approvalRequired, storageEncryption, hardwareProfile]
+      properties:
+        runtime:
+          type: string
+          enum: [mlx, llamacpp, ollama, lmstudio]
+        endpoint:
+          type: string
+        model:
+          type: string
+        modelStatus:
+          type: string
+          enum: [connected, disconnected, checking, downloading]
+        offlineOnly:
+          type: boolean
+        cloudProvidersBlocked:
+          type: boolean
+        computerUseEnabled:
+          type: boolean
+        approvalRequired:
+          type: boolean
+        storageEncryption:
+          type: string
+        hardwareProfile:
+          type: string
+    SystemSettingsUpdate:
+      type: object
+      properties:
+        runtime:
+          type: string
+          enum: [mlx, llamacpp, ollama, lmstudio]
+        endpoint:
+          type: string
+          maxLength: 300
+        model:
+          type: string
+          maxLength: 200
+        offlineOnly:
+          type: boolean
+        approvalRequired:
+          type: boolean
+    QuinnExportBundle:
+      type: object
+      required:
+        [exportedAt, agentName, formatVersion, identityVersions, identityProposals, continuityEntries, settings, auditEvents]
+      properties:
+        exportedAt:
+          type: string
+        agentName:
+          type: string
+        formatVersion:
+          type: number
+        identityVersions:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        identityProposals:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        continuityEntries:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        settings:
+          type: object
+          additionalProperties: true
+        auditEvents:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+    LocalModelStatus:
+      type: object
+      required:
+        [runtime, endpoint, model, modelStatus, environment, runtimeDetected]
+      properties:
+        runtime:
+          type: string
+        endpoint:
+          type: string
+        model:
+          type: string
+        modelStatus:
+          type: string
+          enum: [connected, disconnected, checking, downloading]
+        environment:
+          type: string
+          enum: [hosted, local]
+        runtimeDetected:
+          type: boolean
+        detail:
+          type: string
+    LocalModelDownloadResult:
+      type: object
+      required: [started, message]
+      properties:
+        started:
+          type: boolean
+        message:
+          type: string
+    ConnectLocalModelRequest:
+      type: object
+      required: [endpoint, model]
+      properties:
+        endpoint:
+          type: string
+          maxLength: 300
+        model:
+          type: string
+          maxLength: 200

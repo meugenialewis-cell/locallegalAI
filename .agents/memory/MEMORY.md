@@ -1,0 +1,2 @@
+- [Local legal-agent trust boundary](local-legal-agent-trust-boundary.md) — computer use and external actions stay disabled until local isolation, approvals, and audit controls are real.
+- [Quinn identity design](quinn-identity-design.md) — dual identity (professional/personal), autonomy dial; identity describes character, never capability; no self-negation, no grandiosity.

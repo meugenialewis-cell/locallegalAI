@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Local Legal AI Agent"
+description = "A privacy-first legal AI workstation for managing isolated matters, searching locally held documents with citations, configuring local models, reviewing tool proposals, and maintaining an audit trail before computer use is enabled."
+version = "1.0.0"
+id = "artifacts/legal-agent"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25198
+
+[services.development]
+run = "pnpm --filter @workspace/legal-agent run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/legal-agent", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/legal-agent/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25198"
+BASE_PATH = "/"
